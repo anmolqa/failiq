@@ -1,0 +1,132 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #0a0a0f;
+  --surface: #111118;
+  --surface-2: #1a1a24;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(255, 255, 255, 0.16);
+  --accent: #7c6af7;
+  --accent-2: #a78bfa;
+  --accent-glow: rgba(124, 106, 247, 0.3);
+  --text: #f0f0f8;
+  --text-muted: #6b6b80;
+  --text-dim: #9090a8;
+  --success: #34d399;
+  --error: #f87171;
+  --warning: #fbbf24;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+  margin: 0;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--surface);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--surface-2);
+  border-radius: 3px;
+}
+
+/* Markdown output styles */
+.rca-output h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--accent-2);
+  margin: 1.5rem 0 0.5rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid var(--border);
+}
+.rca-output h3 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 1rem 0 0.25rem;
+}
+.rca-output p {
+  margin: 0.4rem 0;
+  line-height: 1.7;
+  color: var(--text-dim);
+}
+.rca-output ul,
+.rca-output ol {
+  padding-left: 1.25rem;
+  margin: 0.4rem 0;
+}
+.rca-output li {
+  margin: 0.2rem 0;
+  color: var(--text-dim);
+  line-height: 1.6;
+}
+.rca-output strong {
+  color: var(--text);
+  font-weight: 600;
+}
+.rca-output em {
+  color: var(--accent-2);
+  font-style: italic;
+}
+.rca-output code {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.1rem 0.35rem;
+  font-size: 0.82rem;
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+  color: var(--accent-2);
+}
+.rca-output pre {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  overflow-x: auto;
+  margin: 0.75rem 0;
+}
+.rca-output pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text-dim);
+}
+.rca-output hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1.25rem 0;
+}
+.rca-output table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.75rem 0;
+  font-size: 0.85rem;
+}
+.rca-output th {
+  background: var(--surface-2);
+  color: var(--text);
+  font-weight: 600;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  border: 1px solid var(--border);
+}
+.rca-output td {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+}
+.rca-output tr:nth-child(even) td {
+  background: rgba(255, 255, 255, 0.02);
+}
