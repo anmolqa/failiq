@@ -14,6 +14,9 @@ FailIQ takes raw CI/test log files, extracts meaningful failure signals, redacts
 ### Analyze Tab
 ![FailIQ Analyze Tab](docs/screenshot_analyze.png)
 
+<img width="940" height="552" alt="image" src="https://github.com/user-attachments/assets/691969c0-e905-44bf-a825-8a171a59b562" />
+
+
 ### Knowledge Base Tab
 ![FailIQ Knowledge Base](docs/screenshot_knowledge.png)
 
