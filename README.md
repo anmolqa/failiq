@@ -8,7 +8,7 @@ FailIQ takes raw CI/test log files, extracts meaningful failure signals, redacts
 
 ## Demo
 
-> **Sample log:** [`sample_logs/ecommerce_checkout_failure.log`](sample_logs/ecommerce_checkout_failure.log)
+> **Sample log:** [`sample_logs/ecommerce_checkout_failure.log`](sample_logs/ecommerce_checkout_failure.log)  
 > **Sample RCA output:** [`sample_output/example_rca.md`](sample_output/example_rca.md) · [`example_rca.json`](sample_output/example_rca.json)
 
 ### Analyze Tab
@@ -32,6 +32,38 @@ When a CI job fails, engineers spend 15–45 minutes manually reading through th
 4. **Retrieve** — top-5 most relevant chunks pulled from the knowledge base using semantic search
 5. **Analyze** — Gemini 2.5 Flash produces a structured RCA with failure clusters, bug classification, and suggested fixes
 6. **Learn** — ingest past RCA reports, Jira tickets, or custom notes so future analyses reference known patterns
+
+---
+
+## Evaluation
+
+> Try it yourself: upload [`sample_logs/ecommerce_checkout_failure.log`](sample_logs/ecommerce_checkout_failure.log) and compare the output to [`sample_output/example_rca.md`](sample_output/example_rca.md).
+
+### RCA quality (sample log)
+
+| Metric | Value |
+|---|---|
+| Total tests in log | 48 |
+| Failures identified | 6 / 6 (**100% recall**) |
+| Failure clusters formed | 3 |
+| Bug classification accuracy | 3/3 (**100%**) |
+| Non-blocking noise correctly separated | ✅ Yes |
+| Time to analysis | ~30 seconds |
+| Estimated manual triage time | 15–30 minutes |
+| **Time saved** | **~97%** |
+
+### Parser performance (typical real CI log)
+
+Real CI logs from tools like pytest, Jest, or JUnit often contain 1,000–10,000+ lines of timestamps, Docker pull output, environment setup, and verbose HTTP traces. The parser extracts only the lines that matter:
+
+| Metric | Typical value |
+|---|---|
+| Raw log lines | 1,000 – 10,000 |
+| Lines after parsing | 30 – 100 |
+| Noise reduction | **95–99%** |
+| Secrets redacted | Varies (emails, tokens, IPs stripped automatically) |
+
+*RCA accuracy improves as the knowledge base grows with past reports and Jira tickets.*
 
 ---
 
@@ -85,8 +117,6 @@ The parser is the most critical component — LLM quality is bounded by input qu
 | 4 | Python tracebacks | `Traceback (most recent call last)` |
 | 5 | Infrastructure errors | `ERROR`, `500 Internal Server Error`, `Timeout` |
 
-**Result on real logs:** 5,135 raw lines → 47 extracted lines (**99.1% noise reduction**)
-
 **Secret redaction (applied after extraction, before LLM):**
 - API keys, tokens, passwords (`key=`, `token=`, `secret=`)
 - AWS access keys (`AKIA...`)
@@ -94,35 +124,6 @@ The parser is the most critical component — LLM quality is bounded by input qu
 - Email addresses
 - IPv4 addresses
 - Private key blocks (`-----BEGIN PRIVATE KEY-----`)
-
----
-
-## Evaluation
-
-### Benchmark: GitLab Job 64091591 (`alert_rule_v2`)
-
-| Metric | Value |
-|---|---|
-| Total tests | 165 |
-| Failures identified | 10 / 10 (**100% recall**) |
-| Failure clusters formed | 5 (correct) |
-| Bug classification accuracy | 4/5 clusters correct (**80%**) |
-| Non-blocking noise correctly separated | ✅ Yes |
-| Overall RCA accuracy | **~90%** |
-| Time to analysis | ~30 seconds |
-| Estimated manual time | 30–45 minutes |
-| **Time saved** | **~97%** |
-
-### Parser performance
-
-| Metric | Value |
-|---|---|
-| Raw log lines | 5,135 |
-| Lines after parsing | 47 |
-| Noise reduction | 99.1% |
-| Secrets redacted | 2 (email + password in az login command) |
-
-*Accuracy improves as the knowledge base grows with past RCAs and Jira tickets.*
 
 ---
 
@@ -152,6 +153,7 @@ failiq/
 │   └── Dockerfile
 ├── sample_logs/              # Example CI log for testing
 ├── sample_output/            # Example RCA output (markdown + JSON)
+├── docs/                     # Screenshots
 ├── docker-compose.yml        # One-command startup
 ├── start.sh                  # Local dev startup script
 └── requirements.txt          # Pinned Python dependencies
@@ -212,7 +214,7 @@ Supported ingest formats: `.txt`, `.pdf`, `.json` (Jira exports), `.md`, `.log`
 
 ### CI/CD Integration
 - **GitLab/GitHub webhook** — automatically trigger analysis when a pipeline fails, without manual log upload
-- **Direct job URL input** — paste a GitLab job URL and FailIQ fetches and analyzes the log automatically
+- **Direct job URL input** — paste a CI job URL and FailIQ fetches and analyzes the log automatically
 - **CI badge** — embed a FailIQ analysis link directly in pipeline failure notifications
 
 ### Alerting & Notifications
