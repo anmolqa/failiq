@@ -1,0 +1,69 @@
+{
+  "analysis": "See example_rca.md for the full formatted output.",
+  "context_used": 0,
+  "metadata": {
+    "service": "checkout-service",
+    "branch": "main",
+    "total_tests": 48,
+    "passed": 42,
+    "failed": 6,
+    "duration_seconds": 183.42,
+    "log_lines_raw": 52,
+    "log_lines_after_parse": 28,
+    "noise_reduction_pct": 46.2,
+    "secrets_redacted": 0,
+    "rag_chunks_retrieved": 0
+  },
+  "clusters": [
+    {
+      "name": "Discount Engine Regression",
+      "category": "Product Bug",
+      "confidence": 5,
+      "tests": [
+        "test_checkout_applies_discount_code",
+        "test_checkout_expired_discount_code_rejected",
+        "test_checkout_stack_multiple_discounts"
+      ],
+      "assertions": [
+        "assert 85.00 == 90.00 (SAVE10 applied 15% instead of 10%)",
+        "assert 200 == 400 (expired code not rejected)",
+        "assert 72.00 == 81.00 (stacked discounts: 28% instead of 19%)"
+      ],
+      "suggested_fix": "Review recent commits to discount_service.py. Check decimal vs integer percentage format."
+    },
+    {
+      "name": "Payment Gateway Reliability",
+      "category": "Product Bug",
+      "confidence": 5,
+      "tests": [
+        "test_payment_gateway_timeout_retries",
+        "test_payment_idempotency_key_prevents_double_charge"
+      ],
+      "assertions": [
+        "assert 0 == 3 (retry count: 0 retries on timeout)",
+        "assert 2 == 1 (idempotency key not respected, double charge)"
+      ],
+      "suggested_fix": "Verify retry decorator is applied to payment gateway client. Check Idempotency-Key header is sent."
+    },
+    {
+      "name": "Inventory Reservation",
+      "category": "Product Bug",
+      "confidence": 4,
+      "tests": [
+        "test_inventory_reserve_on_checkout"
+      ],
+      "assertions": [
+        "assert 0 == 1 (SKU-98765 not reserved after checkout)"
+      ],
+      "suggested_fix": "Check async reservation is awaited. Fix Redis in CI for clean signal."
+    }
+  ],
+  "setup_issues": [
+    {
+      "type": "Redis Connection Refused",
+      "error": "Connection refused: redis:6379",
+      "blocking": false,
+      "note": "Fell back to in-memory cache. May be masking inventory reservation failure."
+    }
+  ]
+}

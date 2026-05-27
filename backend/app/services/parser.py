@@ -1,15 +1,52 @@
 import re
 
 
+# ── ANSI escape code stripper ─────────────────────────────────────────────────
+_ANSI = re.compile(r"\x1b\[[0-9;]*m")
+
+# ── Secret / PII redaction patterns ──────────────────────────────────────────
+# Applied BEFORE sending logs to any external LLM.
+_REDACTION_RULES: list[tuple[re.Pattern, str]] = [
+    # API keys / tokens (generic long alphanumeric strings after key= or token=)
+    (re.compile(r"(?i)(api[_-]?key|token|secret|password|passwd|pwd|auth)[=:\s]+['\"]?[\w\-\.]{8,}['\"]?"), r"\1=<REDACTED>"),
+    # AWS keys
+    (re.compile(r"AKIA[0-9A-Z]{16}"), "<AWS_KEY_REDACTED>"),
+    # Generic bearer tokens
+    (re.compile(r"(?i)bearer\s+[\w\-\.]{20,}"), "Bearer <TOKEN_REDACTED>"),
+    # Private key blocks
+    (re.compile(r"-----BEGIN [A-Z ]+PRIVATE KEY-----.*?-----END [A-Z ]+PRIVATE KEY-----", re.DOTALL), "<PRIVATE_KEY_REDACTED>"),
+    # Email addresses
+    (re.compile(r"[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}"), "<EMAIL_REDACTED>"),
+    # IP addresses (IPv4)
+    (re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b"), "<IP_REDACTED>"),
+    # UUIDs that look like secrets (keep test UUIDs but redact long hex strings in auth contexts)
+    (re.compile(r"(?i)(key|secret|token|credential)[=:\s]+[0-9a-f\-]{32,}"), r"\1=<REDACTED>"),
+    # GitHub / GitLab tokens
+    (re.compile(r"gh[ps]_[A-Za-z0-9]{36}"), "<GH_TOKEN_REDACTED>"),
+    (re.compile(r"glpat-[A-Za-z0-9\-_]{20}"), "<GL_TOKEN_REDACTED>"),
+]
+
+
+def redact_secrets(text: str) -> str:
+    """Remove secrets and PII from log text before sending to an external LLM."""
+    for pattern, replacement in _REDACTION_RULES:
+        text = pattern.sub(replacement, text)
+    return text
+
+
 def clean_logs(log_text: str) -> str:
     """
-    Extract high-signal lines from CI/test logs.
+    Extract high-signal lines from CI/test logs, then redact secrets/PII.
 
-    Priority tiers:
-    1. Pytest summary section (===...===) — always included
-    2. Test failure headers (___...___) — test function names
-    3. Assertion errors and failure details
-    4. Infrastructure/setup errors (auth, connection, etc.)
+    Parser heuristics (priority tiers):
+    1. Pytest summary section (=== N failed, N passed ===)
+    2. Test failure headers (___ test_function_name ___)
+    3. Assertion errors and failure details (E assert, AssertionError)
+    4. Python exception tracebacks
+    5. Infrastructure/setup errors (auth failures, HTTP 5xx, timeouts)
+
+    After extraction, all secrets and PII are redacted before the text
+    is sent to any external LLM.
     """
 
     # Patterns that indicate a meaningful failure signal
@@ -48,13 +85,13 @@ def clean_logs(log_text: str) -> str:
         re.IGNORECASE,
     )
 
-    # Strip ANSI escape codes
-    ansi_escape = re.compile(r"\x1b\[[0-9;]*m")
-
     cleaned_lines = []
     for line in log_text.splitlines():
-        clean = ansi_escape.sub("", line).strip()
+        clean = _ANSI.sub("", line).strip()
         if clean and combined.search(clean):
             cleaned_lines.append(clean)
 
-    return "\n".join(cleaned_lines)
+    extracted = "\n".join(cleaned_lines)
+
+    # Redact secrets and PII before returning
+    return redact_secrets(extracted)

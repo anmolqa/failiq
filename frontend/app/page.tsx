@@ -268,7 +268,7 @@ export default function Home() {
               <input
                 id="log-input"
                 type="file"
-                accept=".txt,.log"
+                accept=".txt,.log,.TXT,.LOG"
                 style={{ display: "none" }}
                 onChange={(e) => e.target.files && setFile(e.target.files[0])}
               />
